@@ -18,7 +18,7 @@ jobs:
                   ref: nightly
 
             - name: Install Rust toolchain
-              uses: dtolnay/rust-toolchain@stable
+              uses: dtolnay/rust-toolchain@nightly
 
             - name: Build Project (Release mode)
               run: cargo build --release
