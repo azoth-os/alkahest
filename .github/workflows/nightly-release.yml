@@ -27,5 +27,9 @@ jobs:
               uses: softprops/action-gh-release@v1
               with:
                   tag_name: nightly
-                  name: "Nightly Development Build"
-                  body: "Compilation automatic de la branche"
+                  name: "Nightly Release Build"
+                  body: "Compilation ${{ github.event.repository.updated_at }}"
+                  prerelease: true
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  
