@@ -1,7 +1,12 @@
 name: Nightly Build (Rust/Cargo)
 
 on:
-    workflow_dispatch: # Permet de le lancer manuellement
+    push:
+        branches: [ "nightly" ]
+    workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
     build:
