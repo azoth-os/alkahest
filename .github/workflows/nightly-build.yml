@@ -2,7 +2,7 @@ name: Nightly Build (Rust/Cargo)
 
 on:
     schedule:
-        - cron: '0 0 * * *' # Exécution à minuit tous les jours
+        - cron: '0 0 * * ' # Exécution à minuit tous les jours
     workflow_dispatch: # Permet de le lancer manuellement
 
 jobs:
