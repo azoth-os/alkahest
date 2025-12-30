@@ -1,9 +1,9 @@
 name: Nightly Build (Rust/Cargo)
 
 on:
-    push:
-        branches: [ "nightly" ]
-    workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
