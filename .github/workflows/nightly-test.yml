@@ -1,0 +1,24 @@
+name: Nightly Build (Rust/Cargo)
+
+on:
+    push:
+        branches: [ "nightly" ]
+    workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  ref: nightly
+
+            - name: Install Rust toolchain
+              uses: dtolnay/rust-toolchain@nightly
+
+            - name: Test nightly
+              run: cargo test --verbose
