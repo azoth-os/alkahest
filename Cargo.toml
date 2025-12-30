@@ -1,6 +1,9 @@
 [workspace]
 resolver = "3"
-members = ["alkahest", "alkahest-*"]
+members = [
+    "alkahest",
+    # "alkahest-*"
+]
 
 [workspace.package]
 authors = ["Azoth Foundation <contact@azoth.org>"]
