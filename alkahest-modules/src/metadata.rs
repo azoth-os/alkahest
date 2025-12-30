@@ -1,1 +1,0 @@
-//! Metadata module for Alkahest.

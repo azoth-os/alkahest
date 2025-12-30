@@ -1,24 +1,22 @@
 name: Nightly Test (Rust/Cargo)
 
 on:
-    push:
-        branches: [ "nightly" ]
-    workflow_dispatch:
-
-env:
-  CARGO_TERM_COLOR: always
+  push:
+    branches: ["nightly"]
+  pull_request:
+    branches: ["nightly"]
 
 jobs:
-    test:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              with:
-                  ref: nightly
-
-            - name: Install Rust toolchain
-              uses: dtolnay/rust-toolchain@nightly
-
-            - name: Test nightly
-              run: cargo test --verbose
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+      - name: Run Cargo Check
+        run: cargo check --all-targets
+      - name: Run Cargo Tests
+        run: cargo test --all-features
+        

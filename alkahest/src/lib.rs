@@ -1,2 +1,3 @@
-#![no_std]
+//! # Alkahest 
+#![cfg_attr(not(test), no_std)]
 
