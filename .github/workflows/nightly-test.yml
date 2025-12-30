@@ -1,4 +1,4 @@
-name: Nightly Build (Rust/Cargo)
+name: Nightly Test (Rust/Cargo)
 
 on:
     push:
