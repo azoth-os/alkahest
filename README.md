@@ -1,4 +1,4 @@
-# :alembic: *Alkahest* - Hypervisor Type-1
+# :alembic: *Alkahest* - [Hypervisor Type-1]
 
 > [!WARNING]
 >
