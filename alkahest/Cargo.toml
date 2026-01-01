@@ -1,5 +1,5 @@
 [package]
-name = "alkahest-hypervisor"
+name = "alkahest"
 description = "Alkahest Hypervisor"
 version = { workspace = true }
 authors = { workspace = true }
