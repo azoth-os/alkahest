@@ -1,7 +1,10 @@
 [package]
 name = "alkahest-core"
+description = "Alkahest Core Library"
 version = { workspace = true }
 authors = { workspace = true }
 edition = { workspace = true }
+license-file = { workspace = true }
+repository = { workspace = true }
 
 [dependencies]

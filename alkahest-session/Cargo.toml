@@ -1,7 +1,9 @@
 [package]
 name = "alkahest-session"
+description = "Alkahest Session Management"
 version = { workspace = true }
 authors = { workspace = true }
 edition = { workspace = true }
+repository = { workspace = true }
 
 [dependencies]

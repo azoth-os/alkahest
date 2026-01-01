@@ -1,7 +1,10 @@
 [package]
 name = "alkahest-utils"
+description = "Alkahest Utilities"
 version = { workspace = true }
 authors = { workspace = true }
 edition = { workspace = true }
+license-file = { workspace = true }
+repository = { workspace = true }
 
 [dependencies]
