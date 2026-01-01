@@ -4,9 +4,9 @@ members = ["alkahest", "alkahest-*"]
 
 [workspace.package]
 authors = ["Azoth Foundation <contact@azoth.org>"]
+version = "0.1.1"
 edition = "2024"
 
 [workspace.dependencies]
-alkahest-modules = { path = "alkahest-modules" }
-alkahest-parser = { path = "alkahest-parser" }
-alkahest-lexer = { path = "alkahest-lexer" }
+alkahest-diagnostics = { path = "./alkahest-diagnostics" }
+alkahest-session = { path = "./alkahest-session" }

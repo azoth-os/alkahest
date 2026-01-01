@@ -1,0 +1,35 @@
+name: Nightly Build (Rust/Cargo)
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  ref: nightly
+
+            - name: Install Rust toolchain
+              uses: dtolnay/rust-toolchain@nightly
+
+            - name: Build Project (Release mode)
+              run: cargo build --release
+
+            - name: Update Nightly Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: nightly
+                  name: "Nightly Release Build"
+                  body: "Compilation ${{ github.event.repository.updated_at }}"
+                  prerelease: true
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  
