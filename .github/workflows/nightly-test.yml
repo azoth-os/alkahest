@@ -18,4 +18,4 @@ jobs:
       - name: Run Cargo Check
         run: cargo check --all-targets
       - name: Run Cargo Tests
-        run: cargo test --all-features --all
+        run: cargo test --all --verbose
