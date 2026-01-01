@@ -19,6 +19,18 @@ Alkahest transforme le bytecode Wasm en code machine natif sécurisé, éliminan
 3. **Performance "Bare-Metal" :** Utilisation de la compilation *Ahead-of-Time* pour atteindre une vitesse d'exécution proche du C/Rust natif.
 4. **Résilience (Micro-Recovery) :** Capacité de redémarrer un module crashé en quelques microsecondes en réinitialisant simplement sa session.
 
+## 🏗️ Architecture (Inspirée de `rustc`)
+
+Alkahest est découpé en crates spécialisées pour garantir la modularité et faciliter les tests en environnement `std` tout en restant `no_std` au runtime.
+
+### 📦 Les Composants du Workspace
+
+* **`alkahest-utils`** : Fondations du système. Définit les types d'adresses pour le SAS et les structures de données de base.
+* **`alkahest-diagnostics`** : Système riche de rapports d'erreurs et de logs. Fournit des messages d'erreurs structurés avec codes uniques (ex: `ALKA_001`).
+* **`alkahest-session`** : Chef d'orchestre du cycle de vie des modules. Gère la machine à états : `Validating` ➔ `Compiling` ➔ `Linking` ➔ `Ready`.
+* **`alkahest-parse`** : Décodeur et validateur de bytecode Wasm (basé sur `wasmparser`). Transforme le binaire en une représentation exploitable.
+* **`alkahest-link`** : Le moteur de liaison. Il résout les symboles et injecte les fonctions système (VTable) du noyau Athanor dans les modules.
+* **`alkahest-codegen`** : (À venir) Backend AOT transformant l'IR en code machine optimisé pour l'architecture cible.
 
 ## 🛡️ Isolation SFI (Software Fault Isolation)
 
@@ -28,5 +40,8 @@ Contrairement aux hyperviseurs classiques (Xen, KVM), Alkahest n'utilise pas la 
 2.  **Shadow Stacks :** Séparation de la pile de données et de la pile de contrôle (adresses de retour).
 3.  **Capabilities :** Un module ne peut appeler que les fonctions système que le `Linker` a explicitement liées à sa session.
 
-## License
+## 🛠️ Développement
+
+Le projet est configuré pour être compilé sans la bibliothèque standard, mais supporte les tests unitaires via `std`.
+
 
