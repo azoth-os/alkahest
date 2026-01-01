@@ -9,7 +9,12 @@ isolation logicielle (**SFI** - Software Fault Isolation), conçu exclusivement 
 
 [WASM]: https://webassembly.org/
 
-## Objectifs
+## 🎯 Objectifs
+
+1. **Zero-Context-Switch :** Exécution de tous les modules dans un **Single Address Space (SAS)**. Les appels système ne sont plus des interruptions (`syscall`), mais des appels de fonctions directs.
+2. **Sécurité par la Preuve :** Isolation garantie par la validation sémantique du bytecode et l'insertion de gardes logicielles au moment de la compilation AOT.
+3. **Performance "Bare-Metal" :** Utilisation de la compilation *Ahead-of-Time* pour atteindre une vitesse d'exécution proche du C/Rust natif.
+4. **Résilience (Micro-Recovery) :** Capacité de redémarrer un module crashé en quelques microsecondes en réinitialisant simplement sa session.
 
 AOT
 
