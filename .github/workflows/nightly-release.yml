@@ -1,6 +1,11 @@
 name: Nightly Release (Rust/Cargo)
 
 on:
+  push:
+    branches: ["nightly"]
+    tags:
+      - "v*.*.*" # Déclenche sur les tags de version
+      
   schedule:
     - cron: "0 0 * * *" # S'exécute chaque soir à minuit
   workflow_dispatch: # Permet de le lancer manuellement pour tester
