@@ -3,6 +3,7 @@ use core::ops::{BitAnd, BitOr, Not};
 
 pub const trait Address: [const] Destruct + Copy + PartialEq + Eq {
     type Value: Copy
+        + [const] PartialEq
         + [const] Destruct
         + [const] BitAnd<Output = Self::Value>
         + [const] BitOr<Output = Self::Value>
