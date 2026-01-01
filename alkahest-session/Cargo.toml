@@ -1,11 +1,10 @@
 [package]
-name = "alkahest"
-description = "Alkahest Hypervisor"
+name = "alkahest-session"
+description = "Alkahest Session Management"
 version = { workspace = true }
 authors = { workspace = true }
 edition = { workspace = true }
-license-file = { workspace = true }
 repository = { workspace = true }
+license-file = { workspace = true }
 
 [dependencies]
-alkahest-internal = { workspace = true }

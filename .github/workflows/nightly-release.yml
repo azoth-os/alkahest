@@ -1,0 +1,75 @@
+name: Nightly Release (Rust/Cargo)
+
+on:
+  push:
+    branches: ["nightly"]
+    tags:
+      - "v*.*.*" # Déclenche sur les tags de version
+  schedule:
+    - cron: "0 0 * * *" # S'exécute chaque soir à minuit
+  workflow_dispatch: # Permet de le lancer manuellement pour tester
+
+jobs:
+  publish-nightly:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Obligatoire pour créer des tags et des releases
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Récupère tout l'historique pour le taggage
+
+      - name: Install Rust Nightly
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Generate Version Tag
+        id: vars
+        run: |
+          # 1. Version de base depuis Cargo.toml
+          RAW_VERSION=$(grep '^version =' Cargo.toml | head -1 | awk -F '"' '{print $2}')
+          # 2. Date au format YYYYMMDD
+          DATE=$(date +'%Y%m%d')
+          # 3. Short SHA du commit actuel (7 caractères)
+          SHA=$(git rev-parse --short HEAD)
+
+          # Construction du tag final
+          TAG_NAME="v${RAW_VERSION}-nightly.${DATE}.${SHA}"
+
+          echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "VERSION_TAG=${TAG_NAME}" >> $GITHUB_ENV
+
+      # 2. Compilation du projet (Release mode)
+      - name: Build Alkahest
+        run: cargo build --release --workspace
+
+      # 3. Création du Tag Git
+      - name: Create Git Tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ steps.vars.outputs.tag }}
+          git push origin ${{ steps.vars.outputs.tag }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: "Alkahest Nightly [${{ steps.vars.outputs.tag }}]"
+          generate_release_notes: true
+          body: |
+            ## 🛠 Nightly Build Details
+            - **Version Base** : ${{ steps.vars.outputs.tag }}
+            - **Commit SHA** : `${{ github.sha }}`
+            - **Status** : Expérimental / Nightly
+
+            Les notes de mise à jour ci-dessous ont été générées automatiquement à partir des derniers commits.
+          prerelease: true
+          files: |
+            target/release/alkahest*
+            target/release/*.elf
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
