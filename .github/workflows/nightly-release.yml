@@ -5,7 +5,7 @@ on:
     branches: ["nightly"]
     tags:
       - "v*.*.*" # Déclenche sur les tags de version
-      
+
   schedule:
     - cron: "0 0 * * *" # S'exécute chaque soir à minuit
   workflow_dispatch: # Permet de le lancer manuellement pour tester
@@ -50,7 +50,7 @@ jobs:
           git push origin ${{ steps.vars.outputs.tag }}
 
       - name: Create Nightly Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.vars.outputs.tag }}
           name: Alkahest Nightly Build [${{ steps.vars.outputs.tag }}]
@@ -59,7 +59,7 @@ jobs:
             Version: ${{ steps.vars.outputs.tag }}
           draft: false
           prerelease: true
-          # Note: Assure-toi que ce chemin correspond à ton binaire réel
+          generate_release_notes: true
           files: |
             target/release/alkahest*
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
