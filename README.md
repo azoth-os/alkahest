@@ -16,9 +16,14 @@ isolation logicielle (**SFI** - Software Fault Isolation), conçu exclusivement 
 3. **Performance "Bare-Metal" :** Utilisation de la compilation *Ahead-of-Time* pour atteindre une vitesse d'exécution proche du C/Rust natif.
 4. **Résilience (Micro-Recovery) :** Capacité de redémarrer un module crashé en quelques microsecondes en réinitialisant simplement sa session.
 
-AOT
 
-USERLAND -> ALKAHEST -> ATHANOR -> HARDWARD
+## 🛡️ Isolation SFI (Software Fault Isolation)
+
+Contrairement aux hyperviseurs classiques (Xen, KVM), Alkahest n'utilise pas la pagination matérielle (MMU) pour séparer les processus. L'isolation est maintenue par :
+
+1.  **Vérification de Bornes :** Chaque accès mémoire est vérifié par le compilateur.
+2.  **Shadow Stacks :** Séparation de la pile de données et de la pile de contrôle (adresses de retour).
+3.  **Capabilities :** Un module ne peut appeler que les fonctions système que le `Linker` a explicitement liées à sa session.
 
 ## License
 
