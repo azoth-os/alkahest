@@ -25,17 +25,23 @@ jobs:
       - name: Install Rust Nightly
         uses: dtolnay/rust-toolchain@nightly
         with:
-          targets: x86_64-unknown-none # Cible typique pour un noyau OS
+          targets: wasm32-unknown-unknown
 
-      # 1. Génération du nom de version (ex: 0.1.0-nightly.20251231)
-      - name: Generate Version Name
+      - name: Generate Version Tag
         id: vars
         run: |
+          # 1. Version de base depuis Cargo.toml
           RAW_VERSION=$(grep '^version =' Cargo.toml | head -1 | awk -F '"' '{print $2}')
+          # 2. Date au format YYYYMMDD
           DATE=$(date +'%Y%m%d')
-          NIGHTLY_TAG="${RAW_VERSION}-nightly.${DATE}"
-          echo "tag=${NIGHTLY_TAG}" >> $GITHUB_OUTPUT
-          echo "VERSION_TAG=${NIGHTLY_TAG}" >> $GITHUB_ENV
+          # 3. Short SHA du commit actuel (7 caractères)
+          SHA=$(git rev-parse --short HEAD)
+          
+          # Construction du tag final
+          TAG_NAME="v${RAW_VERSION}-nightly.${DATE}.${SHA}"
+          
+          echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "VERSION_TAG=${TAG_NAME}" >> $GITHUB_ENV
 
       # 2. Compilation du projet (Release mode)
       - name: Build Alkahest
@@ -48,18 +54,23 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag ${{ steps.vars.outputs.tag }}
           git push origin ${{ steps.vars.outputs.tag }}
-
-      - name: Create Nightly Release
-        uses: softprops/action-gh-release@v2
+          
+        
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.vars.outputs.tag }}
-          name: Alkahest Nightly Build [${{ steps.vars.outputs.tag }}]
+          name: "Alkahest Nightly [${{ steps.vars.outputs.tag }}]"
           body: |
-            Build automatique nightly.
-            Version: ${{ steps.vars.outputs.tag }}
-          draft: false
+            ## 🛠 Nightly Build Details
+            - **Version Base** : ${{ steps.vars.outputs.tag }}
+            - **Commit SHA** : `${{ github.sha }}`
+            - **Status** : Expérimental / Nightly
+            
+            Ce build contient les dernières avancées sur le **Lexer** et la gestion des **Sub-SAS**.
           prerelease: true
-          generate_release_notes: true
           files: |
             target/release/alkahest*
+            target/release/*.elf
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
