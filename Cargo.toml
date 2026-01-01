@@ -3,10 +3,14 @@ resolver = "3"
 members = ["alkahest", "alkahest-*"]
 
 [workspace.package]
-authors = ["Azoth Foundation <contact@azoth.org>"]
 version = "0.1.1"
+authors = ["Azoth Foundation <contact@azoth.org>"]
 edition = "2024"
+repository = "https://github.com/azoth-os/alkahest"
+documentation = "https://docs.azoth.org/alkahest"
+license-file = "LICENSE"
 
 [workspace.dependencies]
 alkahest-diagnostics = { path = "./alkahest-diagnostics" }
 alkahest-session = { path = "./alkahest-session" }
+alkahest-internal = { path = "./alkahest-internal" }

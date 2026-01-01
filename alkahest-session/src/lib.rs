@@ -1,4 +1,5 @@
 //! # Alkahest-session
+//! 
 #![cfg_attr(not(test), no_std)]
 
 /// The state of a session.

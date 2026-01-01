@@ -1,10 +1,10 @@
 [package]
-name = "alkahest-session"
-description = "Alkahest Session Management"
+name = "alkahest-internal"
 version = { workspace = true }
 authors = { workspace = true }
 edition = { workspace = true }
 repository = { workspace = true }
+documentation = { workspace = true }
 license-file = { workspace = true }
 
 [dependencies]
