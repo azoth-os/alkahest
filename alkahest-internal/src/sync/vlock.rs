@@ -2,9 +2,9 @@
 use crate::mem::addr::Address;
 use core::marker::{Destruct, PhantomData};
 
-pub const trait VLock<A>: [const] Destruct {
-    fn lock(&self, addr: A) -> A;
-    fn unlock(&self, addr: A) -> Option<A>;
+pub const trait VLock<A: Address>: [const] Destruct {
+    fn seal(&self, addr: A) -> A;
+    fn unseal(&self, addr: A) -> Option<A>;
 }
 
 /// The vault who using a VLock for securing its address.
@@ -26,7 +26,7 @@ where
     /// Creates a new vault with the given address and VLock strategy.
     #[inline(always)]
     pub fn new(addr: A, lock: S) -> Option<Self> {
-        if addr.is_null() {
+        if addr.is_invalid() {
             None
         } else {
             Some(Self {
@@ -37,20 +37,10 @@ where
         }
     }
 
-    /// Returns the locked address.
+    ///
     #[inline(always)]
-    pub fn as_locked(&self) -> A {
-        self.lock.lock(self.addr)
-    }
-
-    /// Attempts to unlock the locked address back to its original form.
-    #[inline(always)]
-    pub fn try_unlock(&self, addr: A) -> Option<A> {
-        self.lock.unlock(addr)
-    }
-
     pub fn secure(&self) -> A {
-        self.lock.lock(self.addr)
+        self.lock.seal(self.addr)
     }
 }
 
@@ -62,26 +52,34 @@ mod tests {
     struct TestAddr(usize);
 
     impl const Address for TestAddr {
-        fn as_usize(&self) -> usize {
+        type Value = usize;
+
+        fn as_value(&self) -> Self::Value {
             self.0
         }
 
-        fn from_usize(addr: usize) -> Self {
-            TestAddr(addr)
+        unsafe fn from_value_unchecked(value: Self::Value) -> Self {
+            TestAddr(value)
+        }
+
+        fn is_invalid(&self) -> bool {
+            self.0 == 0
         }
     }
 
-    struct OffsetLock;
+    struct OffsetLock {
+        base: usize,
+    }
 
     impl const VLock<TestAddr> for OffsetLock {
-        fn lock(&self, addr: TestAddr) -> TestAddr {
-            TestAddr(addr.as_usize() + 0x1000)
+        fn seal(&self, addr: TestAddr) -> TestAddr {
+            unsafe { TestAddr::from_value_unchecked(addr.as_value() + self.base) }
         }
 
-        fn unlock(&self, addr: TestAddr) -> Option<TestAddr> {
-            let val = addr.as_usize();
-            if val >= 0x1000 {
-                Some(TestAddr(val - 0x1000))
+        fn unseal(&self, addr: TestAddr) -> Option<TestAddr> {
+            let val = addr.as_value();
+            if val >= self.base {
+                Some(unsafe { TestAddr::from_value_unchecked(val - self.base) })
             } else {
                 None
             }
@@ -89,20 +87,29 @@ mod tests {
     }
 
     #[test]
-    fn test_vault_creation_and_lock() {
-        let addr = TestAddr(0x42);
-        let lock = OffsetLock;
+    fn test_vault_seal_unseal() {
+        let base_addr = 0x1000;
+        let lock = OffsetLock { base: base_addr };
+        let raw_addr = TestAddr(0x42);
 
-        let vault = Vault::<TestAddr, OffsetLock, ()>::new(addr, lock).expect("Should not be null");
-        assert_eq!(vault.secure().as_usize(), 0x1042);
+        let vault =
+            Vault::<TestAddr, OffsetLock, ()>::new(raw_addr, lock).expect("Vault creation failed");
+
+        // Vérification du scellage (secure)
+        let sealed = vault.secure();
+        assert_eq!(sealed.as_value(), 0x1042);
+
+        // Vérification du déscellage
+        let unsealed = vault.lock.unseal(sealed).unwrap();
+        assert_eq!(unsealed, raw_addr);
     }
 
-
     #[test]
-    fn test_vault_null_protection() {
-        let null_addr = TestAddr(0);
-        let lock = OffsetLock;
-        let vault = Vault::<TestAddr, OffsetLock, ()>::new(null_addr, lock);
-        assert!(vault.is_none(), "Vault should refuse null addresses");
+    fn test_vault_invalid_addr() {
+        let lock = OffsetLock { base: 0x1000 };
+        let invalid_addr = TestAddr(0); // is_invalid retournera true
+
+        let vault = Vault::<TestAddr, OffsetLock, ()>::new(invalid_addr, lock);
+        assert!(vault.is_none());
     }
 }
