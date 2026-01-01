@@ -5,7 +5,6 @@ on:
     branches: ["nightly"]
     tags:
       - "v*.*.*" # Déclenche sur les tags de version
-
   schedule:
     - cron: "0 0 * * *" # S'exécute chaque soir à minuit
   workflow_dispatch: # Permet de le lancer manuellement pour tester
@@ -36,10 +35,10 @@ jobs:
           DATE=$(date +'%Y%m%d')
           # 3. Short SHA du commit actuel (7 caractères)
           SHA=$(git rev-parse --short HEAD)
-          
+
           # Construction du tag final
           TAG_NAME="v${RAW_VERSION}-nightly.${DATE}.${SHA}"
-          
+
           echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
           echo "VERSION_TAG=${TAG_NAME}" >> $GITHUB_ENV
 
@@ -54,8 +53,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag ${{ steps.vars.outputs.tag }}
           git push origin ${{ steps.vars.outputs.tag }}
-          
-        
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -66,8 +64,8 @@ jobs:
             - **Version Base** : ${{ steps.vars.outputs.tag }}
             - **Commit SHA** : `${{ github.sha }}`
             - **Status** : Expérimental / Nightly
-            
-            Ce build contient les dernières avancées sur le **Lexer** et la gestion des **Sub-SAS**.
+
+            Les notes de mise à jour ci-dessous ont été générées automatiquement à partir des derniers commits.
           prerelease: true
           files: |
             target/release/alkahest*
