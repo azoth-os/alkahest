@@ -59,6 +59,7 @@ jobs:
         with:
           tag_name: ${{ steps.vars.outputs.tag }}
           name: "Alkahest Nightly [${{ steps.vars.outputs.tag }}]"
+          generate_release_notes: true
           body: |
             ## 🛠 Nightly Build Details
             - **Version Base** : ${{ steps.vars.outputs.tag }}
