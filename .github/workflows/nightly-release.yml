@@ -1,35 +1,60 @@
-name: Nightly Build (Rust/Cargo)
+name: Nightly Release (Rust/Cargo)
 
 on:
   schedule:
-    - cron: '0 0 * * *'
-  workflow_dispatch:
-
-env:
-  CARGO_TERM_COLOR: always
+    - cron: "0 0 * * *" # S'exécute chaque soir à minuit
+  workflow_dispatch: # Permet de le lancer manuellement pour tester
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              with:
-                  ref: nightly
+  publish-nightly:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Obligatoire pour créer des tags et des releases
 
-            - name: Install Rust toolchain
-              uses: dtolnay/rust-toolchain@nightly
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Récupère tout l'historique pour le taggage
 
-            - name: Build Project (Release mode)
-              run: cargo build --release
+      - name: Install Rust Nightly
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: x86_64-unknown-none # Cible typique pour un noyau OS
 
-            - name: Update Nightly Release
-              uses: softprops/action-gh-release@v1
-              with:
-                  tag_name: nightly
-                  name: "Nightly Release Build"
-                  body: "Compilation ${{ github.event.repository.updated_at }}"
-                  prerelease: true
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  
+      # 1. Génération du nom de version (ex: 0.1.0-nightly.20251231)
+      - name: Generate Version Name
+        id: vars
+        run: |
+          RAW_VERSION=$(grep '^version =' Cargo.toml | head -1 | awk -F '"' '{print $2}')
+          DATE=$(date +'%Y%m%d')
+          NIGHTLY_TAG="${RAW_VERSION}-nightly.${DATE}"
+          echo "tag=${NIGHTLY_TAG}" >> $GITHUB_OUTPUT
+          echo "VERSION_TAG=${NIGHTLY_TAG}" >> $GITHUB_ENV
+
+      # 2. Compilation du projet (Release mode)
+      - name: Build Alkahest
+        run: cargo build --release --workspace
+
+      # 3. Création du Tag Git
+      - name: Create Git Tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ steps.vars.outputs.tag }}
+          git push origin ${{ steps.vars.outputs.tag }}
+
+      - name: Create Nightly Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: Alkahest Nightly Build [${{ steps.vars.outputs.tag }}]
+          body: |
+            Build automatique nightly.
+            Version: ${{ steps.vars.outputs.tag }}
+          draft: false
+          prerelease: true
+          # Note: Assure-toi que ce chemin correspond à ton binaire réel
+          files: |
+            target/release/alkahest*
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
