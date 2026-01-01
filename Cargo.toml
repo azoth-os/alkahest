@@ -3,7 +3,7 @@ resolver = "3"
 members = ["alkahest", "alkahest-*"]
 
 [workspace.package]
-repository = "https://github.com/azoth-org/alkahest"
+repository = "https://github.com/azoth-os/alkahest"
 authors = ["Azoth Foundation <contact@azoth.org>"]
 license-file = "./LICENSE"
 version = "0.1.1"
