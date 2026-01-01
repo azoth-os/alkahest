@@ -145,28 +145,23 @@ mod tests {
         let base = 0x2000;
         let lock = BitMaskLock::<MockAddr>::new(mask, base);
         
-        // On crée une donnée en mémoire pour tester l'accès
         let secret_value: u32 = 42;
         let secret_ptr = &secret_value as *const u32 as usize;
         
-        // On initialise le Vault avec l'adresse réelle (offset 0 par rapport à elle même ici pour le test)
         let vault: Vault<MockAddr, _, u32, ()> = Vault::new(MockAddr(secret_ptr), lock).unwrap();
 
-        // 1. Unseal sur une adresse valide (après seal)
         let secured_addr = vault.secure();
         assert!(lock.unseal(secured_addr).is_some());
 
-        // 2. Simulation d'une corruption : on change l'adresse manuellement pour pointer ailleurs
         let corrupted_addr = MockAddr(0x3000 | (secret_ptr & mask)); 
         let corrupt_lock = BitMaskLock::<MockAddr>::new(mask, base); // Même lock
         
-        // L'unseal doit retourner None car le préfixe 0x3000 ne correspond pas à la base 0x2000
         assert!(corrupt_lock.unseal(corrupted_addr).is_none());
     }
 
     #[test]
     fn test_vault_deref_access() {
-        let mask = usize::MAX; // On laisse passer toute l'adresse pour le test CPU
+        let mask = usize::MAX;
         let base = 0;
         let lock = BitMaskLock::<MockAddr>::new(mask, base);
 
@@ -175,7 +170,6 @@ mod tests {
         
         let vault: Vault<MockAddr, _, u64, ()> = Vault::new(addr, lock).unwrap();
 
-        // Test du Deref : l'accès via *vault doit retourner la valeur
         assert_eq!(*vault, 0xDEADBEEF);
     }
 
@@ -186,11 +180,9 @@ mod tests {
         let base = 0xAAAA_0000;
         let lock = BitMaskLock::<MockAddr>::new(mask, base);
 
-        // On crée un Vault avec une adresse qui ne respecte pas le masque
-        // Dans la vraie vie, Vault::new devrait peut-être appeler seal() lui-même.
+     
         let vault: Vault<MockAddr, _, u32, ()> = Vault::new(MockAddr(0x1234), lock).unwrap();
 
-        // Cela doit paniquer car 0x1234 ne contient pas la base 0xAAAA_0000
         let _ = *vault;
     }
 }
