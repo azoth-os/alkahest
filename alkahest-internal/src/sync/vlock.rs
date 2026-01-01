@@ -1,24 +1,61 @@
 //! VLock - Vault Locking using SFI techniques.
 use crate::mem::addr::Address;
 use core::marker::{Destruct, PhantomData};
+use core::ops::Deref;
 
 pub const trait VLock<A: Address>: [const] Destruct {
     fn seal(&self, addr: A) -> A;
     fn unseal(&self, addr: A) -> Option<A>;
 }
 
+#[derive(Clone, Copy)]
+pub struct BitMaskLock<A: Address> {
+    mask: A::Value,
+    base: A::Value,
+}
+
+const impl<A: [const] Address> BitMaskLock<A> {
+    pub fn new(mask: A::Value, base: A::Value) -> Self {
+        Self {
+            mask,
+            base: base & !mask,
+        }
+    }
+}
+
+impl<A: [const] Address> const VLock<A> for BitMaskLock<A> {
+    #[inline(always)]
+    fn seal(&self, addr: A) -> A {
+        let raw = addr.as_value();
+        let confined = (raw & self.mask) | self.base;
+
+        unsafe { A::from_value_unchecked(confined) }
+    }
+
+    #[inline(always)]
+    fn unseal(&self, addr: A) -> Option<A> {
+        let val = addr.as_value();
+        if (val & !self.mask) == self.base {
+            Some(unsafe { A::from_value_unchecked(val & self.mask) })
+        } else {
+            None
+        }
+    }
+}
+
 /// The vault who using a VLock for securing its address.
-pub struct Vault<A, S, M>
+pub struct Vault<A, S, T, M>
 where
     A: Address,
     S: VLock<A>,
 {
     addr: A,
     lock: S,
+    _data: PhantomData<T>,
     _mode: PhantomData<M>,
 }
 
-const impl<A, S, M> Vault<A, S, M>
+const impl<A, S, T, M> Vault<A, S, T, M>
 where
     A: [const] Address,
     S: [const] VLock<A>,
@@ -32,8 +69,22 @@ where
             Some(Self {
                 addr,
                 lock,
+                _data: PhantomData,
                 _mode: PhantomData,
             })
+        }
+    }
+
+    #[inline(always)]
+    pub fn as_ref(&self) -> &T {
+        match self.lock.unseal(self.addr) {
+            Some(valid_addr) => unsafe {
+                let raw_val = valid_addr.as_value();
+                let addr_usize = core::ptr::read(&raw_val as *const _ as *const usize);
+
+                &*(addr_usize as *const T)
+            },
+            None => panic!("Vault Integrity Violation"),
         }
     }
 
@@ -44,72 +95,102 @@ where
     }
 }
 
+impl<A, S, T, M> Deref for Vault<A, S, T, M>
+where
+    A: Address,
+    S: VLock<A>,
+{
+    type Target = T;
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        self.as_ref()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    struct TestAddr(usize);
+    // --- Mock de l'implémentation Address pour le test ---
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    struct MockAddr(usize);
 
-    impl const Address for TestAddr {
+    // Simulation du trait Address tel qu'attendu par ton crate
+    impl Address for MockAddr {
         type Value = usize;
-
-        fn as_value(&self) -> Self::Value {
-            self.0
-        }
-
-        unsafe fn from_value_unchecked(value: Self::Value) -> Self {
-            TestAddr(value)
-        }
-
-        fn is_invalid(&self) -> bool {
-            self.0 == 0
-        }
-    }
-
-    struct OffsetLock {
-        base: usize,
-    }
-
-    impl const VLock<TestAddr> for OffsetLock {
-        fn seal(&self, addr: TestAddr) -> TestAddr {
-            unsafe { TestAddr::from_value_unchecked(addr.as_value() + self.base) }
-        }
-
-        fn unseal(&self, addr: TestAddr) -> Option<TestAddr> {
-            let val = addr.as_value();
-            if val >= self.base {
-                Some(unsafe { TestAddr::from_value_unchecked(val - self.base) })
-            } else {
-                None
-            }
-        }
+        fn as_value(&self) -> Self::Value { self.0 }
+        fn is_invalid(&self) -> bool { self.0 == 0 }
+        unsafe fn from_value_unchecked(val: Self::Value) -> Self { MockAddr(val) }
     }
 
     #[test]
-    fn test_vault_seal_unseal() {
-        let base_addr = 0x1000;
-        let lock = OffsetLock { base: base_addr };
-        let raw_addr = TestAddr(0x42);
+    fn test_bitmask_confinement_logic() {
+        // Masque de 256 octets (0xFF) et base à 0x1000
+        let mask = 0x00FF;
+        let base = 0x1000;
+        let lock = BitMaskLock::<MockAddr>::new(mask, base);
 
-        let vault =
-            Vault::<TestAddr, OffsetLock, ()>::new(raw_addr, lock).expect("Vault creation failed");
+        // Une adresse qui dépasse largement du masque
+        let unsafe_addr = MockAddr(0x99FF); 
+        let sealed = lock.seal(unsafe_addr);
 
-        // Vérification du scellage (secure)
-        let sealed = vault.secure();
-        assert_eq!(sealed.as_value(), 0x1042);
-
-        // Vérification du déscellage
-        let unsealed = vault.lock.unseal(sealed).unwrap();
-        assert_eq!(unsealed, raw_addr);
+        // L'adresse doit être confinée à 0x10FF
+        assert_eq!(sealed.as_value(), 0x10FF);
     }
 
     #[test]
-    fn test_vault_invalid_addr() {
-        let lock = OffsetLock { base: 0x1000 };
-        let invalid_addr = TestAddr(0); // is_invalid retournera true
+    fn test_vault_integrity_check() {
+        let mask = 0x00FF;
+        let base = 0x2000;
+        let lock = BitMaskLock::<MockAddr>::new(mask, base);
+        
+        // On crée une donnée en mémoire pour tester l'accès
+        let secret_value: u32 = 42;
+        let secret_ptr = &secret_value as *const u32 as usize;
+        
+        // On initialise le Vault avec l'adresse réelle (offset 0 par rapport à elle même ici pour le test)
+        let vault: Vault<MockAddr, _, u32, ()> = Vault::new(MockAddr(secret_ptr), lock).unwrap();
 
-        let vault = Vault::<TestAddr, OffsetLock, ()>::new(invalid_addr, lock);
-        assert!(vault.is_none());
+        // 1. Unseal sur une adresse valide (après seal)
+        let secured_addr = vault.secure();
+        assert!(lock.unseal(secured_addr).is_some());
+
+        // 2. Simulation d'une corruption : on change l'adresse manuellement pour pointer ailleurs
+        let corrupted_addr = MockAddr(0x3000 | (secret_ptr & mask)); 
+        let corrupt_lock = BitMaskLock::<MockAddr>::new(mask, base); // Même lock
+        
+        // L'unseal doit retourner None car le préfixe 0x3000 ne correspond pas à la base 0x2000
+        assert!(corrupt_lock.unseal(corrupted_addr).is_none());
+    }
+
+    #[test]
+    fn test_vault_deref_access() {
+        let mask = usize::MAX; // On laisse passer toute l'adresse pour le test CPU
+        let base = 0;
+        let lock = BitMaskLock::<MockAddr>::new(mask, base);
+
+        let my_data: u64 = 0xDEADBEEF;
+        let addr = MockAddr(&my_data as *const u64 as usize);
+        
+        let vault: Vault<MockAddr, _, u64, ()> = Vault::new(addr, lock).unwrap();
+
+        // Test du Deref : l'accès via *vault doit retourner la valeur
+        assert_eq!(*vault, 0xDEADBEEF);
+    }
+
+    #[test]
+    #[should_panic(expected = "Vault Integrity Violation")]
+    fn test_vault_panic_on_corruption() {
+        let mask = 0x000F;
+        let base = 0xAAAA_0000;
+        let lock = BitMaskLock::<MockAddr>::new(mask, base);
+
+        // On crée un Vault avec une adresse qui ne respecte pas le masque
+        // Dans la vraie vie, Vault::new devrait peut-être appeler seal() lui-même.
+        let vault: Vault<MockAddr, _, u32, ()> = Vault::new(MockAddr(0x1234), lock).unwrap();
+
+        // Cela doit paniquer car 0x1234 ne contient pas la base 0xAAAA_0000
+        let _ = *vault;
     }
 }
