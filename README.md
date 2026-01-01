@@ -3,6 +3,9 @@
 **Alkahest** est un hyperviseur WebAssembly ([Wasm][WASM]) de **Type-1** à
 isolation logicielle (**SFI** - Software Fault Isolation), conçu exclusivement pour le micro-kernel **Athanor** au sein de l'écosystème **Azoth**.
 
+S'inspirant de la philosophie "Compiler-as-a-library" de `rustc`,
+Alkahest transforme le bytecode Wasm en code machine natif sécurisé, éliminant le compromis historique entre performance brute et sécurisé mémoire.
+
 > [!WARNING]
 >
 > Ce répertoire est en cours de développement actif 🛠️ (Pre-alpha) ⏳. Les APIs internes sont sujettes à des modifications fréquentes 🔄.

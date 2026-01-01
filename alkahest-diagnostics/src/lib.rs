@@ -1,14 +1,8 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+//! # Alkahest-diagnostics
+//!
+//! This crate provides diagnostic utilities for the Alkahest hypervisor.
+#![cfg_attr(not(test), no_std)]
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+mod diagnostic;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub use crate::diagnostic::*;
