@@ -1,9 +1,0 @@
-[package]
-name = "alkahest-core"
-repository = { workspace = true }
-authors = { workspace = true }
-license-file = { workspace = true }
-version = { workspace = true }
-edition = { workspace = true }
-
-[dependencies]

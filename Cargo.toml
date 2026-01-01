@@ -13,3 +13,4 @@ license-file = "LICENSE"
 [workspace.dependencies]
 alkahest-diagnostics = { path = "./alkahest-diagnostics" }
 alkahest-session = { path = "./alkahest-session" }
+alkahest-internal = { path = "./alkahest-internal" }

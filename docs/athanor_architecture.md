@@ -19,7 +19,7 @@ Le projet est découpé en crates spécialisées pour assurer une séparation st
 | Crate | Rôle |
 | :--- | :--- |
 | `alkahest` | **La Façade.** Point d'entrée unique pour Athanor. Orchestre les autres crates. |
-| `alkahest-core` | **La Fondation.** Définit le trait `Crucible` (contrat noyau) et les types d'adresses SAS. |
+| `alkahest-internal` | **La Fondation.** Définit le trait `Crucible` (contrat noyau) et les types d'adresses SAS. |
 | `alkahest-modules` | **Le Registre.** Définit la structure d'un module "vivant" (identifiants, limites mémoire, état). |
 | `alkahest-session` | **L'Usine.** Pipeline de chargement temporaire (Validation -> Linking -> Compilation). |
 | `alkahest-macros` | **L'Automatisation.** Macros procédurales (`#[driver]`, `#[app]`) pour la déclaration des modules. |
